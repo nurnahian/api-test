@@ -1,10 +1,34 @@
 version: "3.8"
-
 services:
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: fast-slow-api
-    ports: -"3000:3000"
+    ports:
+      - "3000:3000"
     environment:
-      - NODE_ENV=production
+      NODE_ENV: production
     restart: unless-stopped
+
+  prom-server:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus-config.yml:/etc/prometheus/prometheus.yml:ro
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    restart: unless-stopped
+    depends_on:
+      - prom-server
