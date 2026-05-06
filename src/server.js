@@ -1,6 +1,18 @@
 const express = require("express");
 const client = require("prom-client");
 const responseTime = require("response-time");
+const { createLogger, transport } = require("winston");
+const lokiTransport = require("winston-loki");
+
+const option = {
+  transport: [
+    new lokiTransport({
+      host: "http://127.0.0.1:3100",
+    }),
+  ],
+};
+
+const logger = createLogger(option);
 
 const app = express();
 const PORT = 3000;
@@ -41,6 +53,7 @@ const delayArray = [1000, 1500, 2500, 3000, 4500, 6000, 8000];
 
 // ====================== FAST API ======================
 app.get("/api/fast", (req, res) => {
+  logger.info("Request came on /router/fast");
   res.json({
     status: "success",
     message: "Fast API - Response is quick! ⚡",
@@ -68,7 +81,7 @@ app.get("/api/slow", (req, res) => {
       ];
 
       const error = errorTypes[Math.floor(Math.random() * errorTypes.length)];
-
+      logger.error(error.message);
       return res.status(error.status).json({
         status: "error",
         message: error.message,
@@ -78,6 +91,7 @@ app.get("/api/slow", (req, res) => {
     }
 
     // Success response
+    logger.info("Request came on /router/slow");
     res.json({
       status: "success",
       message: "Slow API - Finally responded! 🐢",
@@ -89,6 +103,7 @@ app.get("/api/slow", (req, res) => {
 
 // Root route
 app.get("/", (req, res) => {
+  logger.info("Request came on /router");
   res.send("Express Fast & Slow API");
 });
 
